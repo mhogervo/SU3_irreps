@@ -87,7 +87,62 @@ def allBracelets(n,k=2):
 ###############################################################
 ###############################################################
 ####
-#### This second part contains number-theoretical functions that can be used
+#### For SU(N) matrices, there is a relation
+####
+####     X^N = 1/N Tr(X^N) + lower traces
+####
+#### which means that many necklaces don't contribute. We need a functions
+#### that only keeps appropriate necklaces.
+####
+###############################################################
+###############################################################
+
+def largestDomain(necklace):
+    # A necklace is of the form (i1, i2, i3, ...). A domain is a group of neighboring beads of the same color.
+    # This function computes the size of the largest domain.
+    
+    # the array walls contains the positions of all the domain walls
+    walls, L = [], len(necklace)
+    for pos in range(L):
+        i,j = necklace[pos-1], necklace[pos]
+        if i != j: walls.append(pos)
+    
+    if walls == []:
+        return len(necklace)
+    else:
+        number_walls = len(walls)
+        sizeOfDomains = [((walls[i] - walls[i-1]) % L) for i in range(number_walls)]
+        return max(sizeOfDomains)    
+
+def validSingleTraces(n,k,N):
+    '''
+    Generate all necklaces with k beads of length n, and at most N-1 beads of the same color appear in a row.
+    For n=N we make an exception, since (i,i,...,i) [n copies of letter i] is a valid single-trace operator.
+    '''
+    checkPosInt(n), checkPosInt(k,1), checkPosInt(N,2)
+     
+    if n==0:
+        return [()] #empty necklace
+    elif n==1:
+        return [] #throw away tr(j) = 0
+    elif n>1:
+        # function that checks if a necklace does not contain
+        # a redundant operator:
+        check = lambda necklace : largestDomain(necklace) < N
+        
+        rawNecklaces = allNecklaces(n,k)
+        out = set(filter(check, rawNecklaces))
+
+        if n==N:
+            constantNecklace = lambda j : tuple([j for _ in range(N)])
+            out.update(set([constantNecklace(j) for j in range(k)]))
+
+        return sorted(list(out))
+    
+###############################################################
+###############################################################
+####
+#### This last part contains number-theoretical functions that can be used
 #### to check the results.
 ####
 ###############################################################
@@ -137,4 +192,5 @@ def braceletPoly(n,k=2):
         return (necklacePoly(n,k) + ((k+1)*pow(k,n//2))//2)//2
     else: # n % 2 == 1:
         return (necklacePoly(n,k) + pow(k,(n+1)//2))//2
-    
+
+
